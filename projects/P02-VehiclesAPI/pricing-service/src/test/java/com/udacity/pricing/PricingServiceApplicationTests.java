@@ -29,6 +29,10 @@ public class PricingServiceApplicationTests {
 	public void contextLoads() {
 	}
 
+	/**
+	 * Test for the endpoint "serivce-pricing"
+	 * @throws Exception
+	 */
 	@Test
 	public void getPrice() throws Exception {
 		ResponseEntity<Price> response = this.restTemplate.getForEntity("http://localhost:" + this.port + "/services/price?vehicleId=12", Price.class);
