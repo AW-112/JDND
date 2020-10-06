@@ -23,7 +23,7 @@ import com.example.demo.model.persistence.repositories.UserRepository;
 @RequestMapping("/api/order")
 public class OrderController {
 
-	private static final Logger log = LoggerFactory.getLogger("splunkLogger");
+	private static final Logger log = LoggerFactory.getLogger("commons-log");
 	
 	@Autowired
 	private UserRepository userRepository;
@@ -36,12 +36,12 @@ public class OrderController {
 	public ResponseEntity<UserOrder> submit(@PathVariable String username) {
 		User user = userRepository.findByUsername(username);
 		if(user == null) {
-			log.error("Order","Error with username. Cannot find user {}", username);
+			log.error("ORDER:Cannot find user {}. Order not submitted.", username);
 			return ResponseEntity.notFound().build();
 		}
 		UserOrder order = UserOrder.createFromCart(user.getCart());
 		orderRepository.save(order);
-		log.info("Order","Order was Created for user {}", username);
+		log.info("ORDER:Order for user {} submitted.", username);
 		return ResponseEntity.ok(order);
 	}
 	
@@ -49,10 +49,17 @@ public class OrderController {
 	public ResponseEntity<List<UserOrder>> getOrdersForUser(@PathVariable String username) {
 		User user = userRepository.findByUsername(username);
 		if(user == null) {
-			log.error("Order","Error with username. Cannot find user {}", username);
+			log.error("ORDER: User {} not found. Cannot retrieve Order history.", username);
 			return ResponseEntity.notFound().build();
 		}
-		log.info("Order","Order history was issued for user {}", username);
-		return ResponseEntity.ok(orderRepository.findByUser(user));
+
+		List<UserOrder> userOrders = orderRepository.findByUser(user);
+		if (userOrders==null) {
+			log.error("ORDER:User {} found but has no orders.", username);
+			return ResponseEntity.notFound().build();
+		}
+
+		log.info("ORDER:Order history for user {} successfully retrieved.", username);
+		return ResponseEntity.ok(userOrders);
 	}
 }

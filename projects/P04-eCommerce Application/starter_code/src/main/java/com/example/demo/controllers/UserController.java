@@ -1,6 +1,7 @@
 package com.example.demo.controllers;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -17,11 +18,13 @@ import com.example.demo.model.persistence.repositories.CartRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateUserRequest;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
 
-	private static final Logger log = LoggerFactory.getLogger("splunkLogger");
+	private static final Logger log = LoggerFactory.getLogger("commons-log");
 
 	@Autowired
 	private UserRepository userRepository;
@@ -34,13 +37,28 @@ public class UserController {
 
 	@GetMapping("/id/{id}")
 	public ResponseEntity<User> findById(@PathVariable Long id) {
-		return ResponseEntity.of(userRepository.findById(id));
+		Optional<User> optionalUser = userRepository.findById(id);
+
+		if ( !optionalUser.isPresent()) {
+			log.error("USER:Cannot find user by id {}.", id);
+			return ResponseEntity.badRequest().build();
+		}
+		log.info("USER:User {} found by id." , id);
+
+		return ResponseEntity.ok(optionalUser.get());
 	}
 
 	@GetMapping("/{username}")
 	public ResponseEntity<User> findByUserName(@PathVariable String username) {
 		User user = userRepository.findByUsername(username);
-		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
+		if (user==null) {
+			log.error("USER:User {} not found.", username);
+			return ResponseEntity.badRequest().build();
+		}
+		log.info("USER:User {} found by name." , username);
+
+		return ResponseEntity.ok(user);
+
 	}
 
 	@PostMapping("/create")
@@ -52,12 +70,12 @@ public class UserController {
 		user.setCart(cart);
 		if (createUserRequest.getPassword().length() < 7 ||
 				!createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())) {
-			log.error("CreateUser","Error with user password. Cannot create user {}", createUserRequest.getUsername());
+			log.error("USER:User password length greater then 6! Cannot create user {}", createUserRequest.getUsername());
 			return ResponseEntity.badRequest().build();
 		}
 		user.setPassword(bCryptPasswordEncoder.encode(createUserRequest.getPassword()));
 		userRepository.save(user);
-		log.info("CreateUser","Created user {}", createUserRequest.getUsername());
+		log.info("USER:User {} created successfully", createUserRequest.getUsername());
 		return ResponseEntity.ok(user);
 	}
 
