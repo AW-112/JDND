@@ -63,7 +63,6 @@ public class CartControllerTest {
     public void add_to_cart() {
         when(userRepo.findByUsername(user.getUsername())).thenReturn(user);
         when(itemRepo.findById(item.getId())).thenReturn(java.util.Optional.ofNullable(item));
-        when(cartRepo.save(cart)).thenReturn(cart);
 
         ModifyCartRequest r = new ModifyCartRequest();
         r.setItemId(item.getId());
